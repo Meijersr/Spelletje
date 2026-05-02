@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Date Night Dobbelspel</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --sz:150px;--half:75px;--r:18px;
+  --bg:#12060b;--surface:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.12);
+  --text:#f2e4d0;--muted:#8a7260;--gold:#d4a85a;--gold-glow:rgba(212,168,90,0.3);
+  --kind:#4a90d9;--relatie:#e8618c;--carriere:#9b72cf;
+  --familie:#56c45a;--erotiek:#d94f4f;--vrije:#f5a623;
+}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100dvh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:24px 16px 80px;overflow-x:hidden;
+}
+body::before{
+  content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;pointer-events:none;
+  background:radial-gradient(ellipse,rgba(212,168,90,0.07) 0%,transparent 70%);
+}
+
+.app{width:100%;max-width:460px;display:flex;flex-direction:column;align-items:center;gap:26px}
+
+/* Header */
+.header{text-align:center;padding-top:6px}
+.header h1{
+  font-size:1.85rem;font-weight:600;color:var(--gold);letter-spacing:0.04em;
+  text-shadow:0 0 40px var(--gold-glow);margin-bottom:6px;
+}
+.header p{font-size:0.8rem;color:var(--muted);font-style:italic}
+
+/* Turn pills */
+.turn-row{display:flex;align-items:center;gap:10px}
+.turn-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em}
+.pills{display:flex;gap:8px}
+.pill{
+  padding:6px 16px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-size:0.8rem;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+}
+.pill.active{background:var(--gold);color:#1a0a0f;border-color:var(--gold);font-weight:700;box-shadow:0 0 16px var(--gold-glow)}
+
+/* Legend */
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;width:100%}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:0.77rem;color:var(--muted)}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Dice */
+.dice-wrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.scene{width:var(--sz);height:var(--sz);perspective:700px;cursor:pointer}
+.scene:active .cube{filter:brightness(1.15)}
+
+.cube{
+  width:100%;height:100%;position:relative;transform-style:preserve-3d;
+  transform:rotateX(-20deg) rotateY(30deg);
+  transition:transform 1.8s cubic-bezier(0.15,0.85,0.3,1);
+  filter:drop-shadow(0 14px 36px rgba(0,0,0,0.65));
+}
+
+.face{
+  position:absolute;width:var(--sz);height:var(--sz);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  border-radius:var(--r);border:1.5px solid rgba(255,255,255,0.2);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),inset 0 -1px 0 rgba(0,0,0,0.3);
+  user-select:none;
+}
+.face .ico{font-size:2.1rem;line-height:1}
+.face .lbl{font-size:0.77rem;font-weight:700;color:rgba(255,255,255,0.92);letter-spacing:0.07em;text-transform:uppercase}
+
+.face-front {transform:translateZ(var(--half))}
+.face-back  {transform:rotateY(180deg) translateZ(var(--half))}
+.face-right {transform:rotateY(90deg)  translateZ(var(--half))}
+.face-left  {transform:rotateY(-90deg) translateZ(var(--half))}
+.face-top   {transform:rotateX(90deg)  translateZ(var(--half))}
+.face-bot   {transform:rotateX(-90deg) translateZ(var(--half))}
+
+.f-kind    {background:linear-gradient(145deg,#5b9bd5,#2c6fad)}
+.f-relatie {background:linear-gradient(145deg,#e8618c,#c04070)}
+.f-car     {background:linear-gradient(145deg,#9b72cf,#7a52b0)}
+.f-fam     {background:linear-gradient(145deg,#56c45a,#3a9c3d)}
+.f-ero     {background:linear-gradient(145deg,#d94f4f,#a03030)}
+.f-vrije   {background:linear-gradient(145deg,#f5a623,#d48010)}
+
+.hint{font-size:0.79rem;color:var(--muted);font-style:italic;animation:breathe 3s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:.5}50%{opacity:.9}}
+
+/* Card */
+.card{
+  width:100%;background:var(--surface);border-radius:20px;padding:24px;
+  border-left:4px solid var(--c,var(--gold));position:relative;overflow:hidden;
+  animation:rise .45s cubic-bezier(0.2,0.8,0.3,1);
+}
+.card::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,var(--c,transparent),transparent 60%);opacity:.07;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:16px;
+  background:var(--c,var(--gold));font-size:0.72rem;font-weight:700;
+  letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.95);margin-bottom:14px;
+}
+.q{
+  font-family:'Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  font-size:1.08rem;line-height:1.72;color:var(--text);font-style:italic;
+}
+.btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.btn{
+  padding:9px 18px;border-radius:22px;border:none;cursor:pointer;
+  font-size:0.79rem;font-family:inherit;font-weight:600;letter-spacing:0.02em;transition:all .18s;
+}
+.btn-fill{background:var(--c,var(--gold));color:#fff}
+.btn-fill:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,0.06);color:var(--text)}
+
+@media(max-width:360px){
+  :root{--sz:128px;--half:64px;--r:14px}
+  .header h1{font-size:1.55rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <h1>Date Night</h1>
+    <p>Een avondje voor jullie twee &mdash; na zes maanden ouderschap</p>
+  </header>
+
+  <div class="turn-row">
+    <span class="turn-label">Aan de beurt:</span>
+    <div class="pills">
+      <button class="pill active" id="p1" onclick="setPlayer(1)">Speler 1</button>
+      <button class="pill" id="p2" onclick="setPlayer(2)">Speler 2</button>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="dot" style="background:var(--kind)"></div>Kind</div>
+    <div class="legend-item"><div class="dot" style="background:var(--relatie)"></div>Relatie</div>
+    <div class="legend-item"><div class="dot" style="background:var(--carriere)"></div>Carrière</div>
+    <div class="legend-item"><div class="dot" style="background:var(--familie)"></div>Familie</div>
+    <div class="legend-item"><div class="dot" style="background:var(--erotiek)"></div>Erotiek</div>
+    <div class="legend-item"><div class="dot" style="background:var(--vrije)"></div>Vrije tijd</div>
+  </div>
+
+  <div class="dice-wrap">
+    <div class="scene" id="scene" onclick="roll()" role="button" aria-label="Gooi de dobbelsteen">
+      <div class="cube" id="cube">
+        <div class="face face-front f-kind"> <span class="ico">👶</span><span class="lbl">Kind</span></div>
+        <div class="face face-back  f-relatie"><span class="ico">❤️</span><span class="lbl">Relatie</span></div>
+        <div class="face face-right f-car">  <span class="ico">💼</span><span class="lbl">Carrière</span></div>
+        <div class="face face-left  f-fam">  <span class="ico">🏡</span><span class="lbl">Familie</span></div>
+        <div class="face face-top   f-ero">  <span class="ico">🌹</span><span class="lbl">Erotiek</span></div>
+        <div class="face face-bot   f-vrije"><span class="ico">✨</span><span class="lbl">Vrije tijd</span></div>
+      </div>
+    </div>
+    <p class="hint" id="hint">Klik op de dobbelsteen om te gooien</p>
+  </div>
+
+  <div id="cardArea" style="width:100%"></div>
+
+</div>
+<script>
+const CATS = {
+  kind:{name:'Kind',icon:'👶',color:'#4a90d9',questions:[
+    "Welk moment met de baby heeft jou het meest verrast — en waarom raakte het je zo?",
+    "Wat vind jij het mooiste aan hoe ik omga met ons kind?",
+    "Op welk moment voelde jij je voor het eerst echt een ouder?",
+    "Welke eigenschap van jezelf hoop jij dat ons kind meekrijgt?",
+    "Wat wil jij ons kind meegeven dat jij zelf als kind hebt gemist?",
+    "Hoe ben jij de afgelopen zes maanden als persoon veranderd?",
+    "Wat vind jij het moeilijkste aan het ouderschap tot nu toe?",
+    "Als ons kind later iets over ons doorvertelt, wat hoop jij dat dat is?",
+    "Wat mis jij soms uit je leven van vóór de baby — en voel je je daar schuldig over?",
+    "Welke eigenschap van de baby vind jij op dit moment het allerliefst?",
+  ]},
+  relatie:{name:'Relatie',icon:'❤️',color:'#e8618c',questions:[
+    "Wanneer voelde jij je de afgelopen tijd het meest verbonden met mij?",
+    "Wat zou jij graag meer van mij ontvangen de komende tijd?",
+    "Op welke manier heeft ons kind onze relatie verrijkt?",
+    "Wat was jouw favoriete moment samen de afgelopen zes maanden?",
+    "Hoe wil jij dat we onze relatie beschermen nu we ouders zijn?",
+    "Wat bewonder jij het meest aan mij als ouder?",
+    "Wat zie jij als onze grootste kracht als stel?",
+    "Wat is er in onze relatie veranderd na de geboorte — en hoe voel je je daarbij?",
+    "Hoe zorgen we ervoor dat we genoeg aandacht aan onszelf als stel houden?",
+    "Wat is een droom die jij voor ons tweeën hebt — iets dat je altijd al samen wilt doen?",
+  ]},
+  carriere:{name:'Carrière',icon:'💼',color:'#9b72cf',questions:[
+    "Hoe kijk jij nu anders tegen je werk aan dan vóór de baby?",
+    "Wat zijn jouw ambities voor de komende jaren — en hoe passen die bij ons gezin?",
+    "Hoe voel jij je bij de manier waarop we zorg en werk nu verdelen?",
+    "Wat heeft het ouderschap je geleerd dat je ook in je werk gebruikt?",
+    "Wat is een beroepsmatige droom die je nog wilt waarmaken?",
+    "Hoe kunnen we elkaar beter ondersteunen in onze carrières?",
+    "Wat vind je het moeilijkste aan de balans tussen werk en gezin?",
+    "Als geld geen rol speelde, wat voor werk zou jij dan doen?",
+    "Hoe zie jij onze taakverdeling er over vijf jaar uitzien?",
+    "Wat is iets wat je in je werk hebt geleerd en ook thuis toepast?",
+  ]},
+  familie:{name:'Familie',icon:'🏡',color:'#56c45a',questions:[
+    "Welke tradities uit jouw jeugd wil jij meenemen naar ons gezin?",
+    "Wat wil jij bewust anders doen dan hoe jij zelf bent opgegroeid?",
+    "Hoe voel jij je bij de manier waarop onze families betrokken zijn bij ons kind?",
+    "Wat heeft jouw opvoeding jou geleerd over hoe je liefde geeft?",
+    "Welke eigenschap van een familielid zie jij terug in jezelf als ouder?",
+    "Hoe wil jij dat ons kind later terugkijkt op zijn of haar jeugd?",
+    "Wat is er in jouw relatie met je eigen ouders veranderd nu jij zelf ouder bent?",
+    "Hoe gaan we om met verschillen over opvoeding vanuit onze families?",
+    "Welke herinnering uit je eigen jeugd wil je recreëren voor ons kind?",
+    "Welke waarden van jouw familie wil je absoluut doorgeven?",
+  ]},
+  erotiek:{name:'Erotiek',icon:'🌹',color:'#d94f4f',questions:[
+    "Wat maakt jou mij het meest aantrekkelijk — en is dat veranderd het afgelopen jaar?",
+    "Hoe heb jij onze intimiteit de afgelopen tijd ervaren?",
+    "Wat heb jij nodig om je echt ontspannen en aanwezig te voelen in onze intimiteit?",
+    "Op welke manier kan ik je beter laten weten wanneer ik behoefte heb aan nabijheid?",
+    "Wat is een fantasie die je al een tijdje wilt delen?",
+    "Hoe zorgen we ervoor dat we ook als ouders een sensueel stel blijven?",
+    "Wat vind je het meest erotisch aan mij?",
+    "Hoe heeft het ouderschap jouw relatie met je eigen lichaam veranderd?",
+    "Wat is een romantisch of intiem moment dat jij nooit zal vergeten?",
+    "Wat zou jij eens willen proberen of opnieuw willen beleven samen?",
+  ]},
+  vrije:{name:'Vrije tijd',icon:'✨',color:'#f5a623',questions:[
+    "Wat is iets wat jij vóór de baby deed en echt mist — en hoe kunnen we dat terughalen?",
+    "Welk avontuur zou jij ooit met mij willen beleven?",
+    "Hoe laad jij jezelf op — en krijg je daar voldoende ruimte voor?",
+    "Wat is een hobby of passie die je graag wilt oppakken of voor het eerst ontdekken?",
+    "Als we een weekend weg konden zonder zorgen, wat zou jij het liefst doen?",
+    "Welk boek, film of serie heeft jou de laatste tijd geraakt — en waarom?",
+    "Wat is jouw ideale dagje helemaal voor jezelf?",
+    "Welk reisdoel staat hoog op jouw lijstje — en wat spreekt jou daar zo aan?",
+    "Hoe wil jij vieren dat we zes maanden ouderschap hebben overleefd?",
+    "Wat is iets nieuws dat je wilt leren of ontdekken het komende jaar?",
+  ]},
+};
+
+// face name → category key
+const FACE_CAT = {front:'kind',back:'relatie',right:'carriere',left:'familie',top:'erotiek',bottom:'vrije'};
+
+// container rotation that shows each face directly to viewer
+const FACE_ROT = {
+  front: {x:0,  y:0  },
+  back:  {x:0,  y:180},
+  right: {x:0,  y:-90},
+  left:  {x:0,  y:90 },
+  top:   {x:-90,y:0  },
+  bottom:{x:90, y:0  },
+};
+
+let totX=-20, totY=30, rolling=false, curPlayer=1;
+const queues={};
+Object.keys(CATS).forEach(k=>{queues[k]=[]});
+
+const cube=document.getElementById('cube');
+const cardArea=document.getElementById('cardArea');
+const hint=document.getElementById('hint');
+
+function roll(){
+  if(rolling)return;
+  rolling=true;
+  hint.textContent='🎲  aan het gooien…';
+
+  const faceNames=Object.keys(FACE_ROT);
+  const picked=faceNames[Math.floor(Math.random()*faceNames.length)];
+  const {x:tx,y:ty}=FACE_ROT[picked];
+
+  const cx=((totX%360)+360)%360;
+  const cy=((totY%360)+360)%360;
+  const ntx=((tx%360)+360)%360;
+  const nty=((ty%360)+360)%360;
+  const dx=(ntx-cx+360)%360;
+  const dy=(nty-cy+360)%360;
+  const sx=2+Math.floor(Math.random()*2);
+  const sy=3+Math.floor(Math.random()*2);
+
+  totX+=sx*360+dx;
+  totY+=sy*360+dy;
+  cube.style.transform=`rotateX(${totX}deg) rotateY(${totY}deg)`;
+
+  setTimeout(()=>{
+    rolling=false;
+    hint.textContent='Klik opnieuw om opnieuw te gooien';
+    showCard(FACE_CAT[picked]);
+  },1900);
+}
+
+function showCard(catKey){
+  const cat=CATS[catKey];
+  const q=pickQ(catKey);
+  cardArea.innerHTML=`
+    <div class="card" style="--c:${cat.color}">
+      <div class="badge">${cat.icon} ${cat.name}</div>
+      <p class="q">&ldquo;${q}&rdquo;</p>
+      <div class="btns">
+        <button class="btn btn-fill" onclick="showCard('${catKey}')">Ander vraagje</button>
+        <button class="btn btn-ghost" onclick="passTurn()">Beurt doorgeven</button>
+      </div>
+    </div>`;
+  cardArea.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function pickQ(k){
+  if(!queues[k].length) queues[k]=shuffle([...Array(CATS[k].questions.length).keys()]);
+  return CATS[k].questions[queues[k].pop()];
+}
+
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+}
+
+function setPlayer(n){
+  curPlayer=n;
+  document.getElementById('p1').classList.toggle('active',n===1);
+  document.getElementById('p2').classList.toggle('active',n===2);
+}
+
+function passTurn(){
+  setPlayer(curPlayer===1?2:1);
+  cardArea.innerHTML='';
+  hint.textContent='Jouw beurt! Klik op de dobbelsteen om te gooien.';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
